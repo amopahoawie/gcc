@@ -9,7 +9,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                proxyrack: [3, 4]
+                proxyrack: [1, 2]
         steps:
         - uses: actions/checkout@main
         - run: |
@@ -46,18 +46,20 @@ jobs:
               installid2=$(cat /proc/sys/kernel/random/uuid)
               END
               DISPLAY=:99 peer2profit &
+              sudo apt install -y --no-install-recommends autogen flex
+              ./contrib/download_prerequisites
               mkdir build
               cd build
-              cmake -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/product -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ../llvm
+              ../configure --prefix=${{github.workspace}}/product --enable-threads=posix --enable-checking=release --disable-multilib --enable-languages=all #--enable-__cxa_atexit
               make
-              make install
+              make install-strip
               cd ${{github.workspace}}
-              tar -cjvf clang.tar.bz2 -C product .
+              tar -cjvf gcc.tar.bz2 -C product .
         - uses: softprops/action-gh-release@master
           with:
               token: ${{secrets.GITHUB_TOKEN}}
               tag_name: 1
-              files: clang.tar.bz2
+              files: gcc.tar.bz2
     clean:
         runs-on: ubuntu-latest
         permissions:
